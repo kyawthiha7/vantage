@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vantage
 
-## Getting Started
+A security testing workbench with an AI assistant, autonomous agent, findings tracker, and report generator.
 
-First, run the development server:
+## Stack
+
+- **Frontend** — Next.js 16 (App Router) on port 3000
+- **Backend** — FastAPI + SQLite on port 8765
+- **AI** — Anthropic Claude (direct API key **or** auth2api proxy)
+
+---
+
+## Requirements
+
+| Tool | Version |
+|------|---------|
+| Node.js | 18+ |
+| Python | 3.11 – 3.14 |
+| Poetry | 1.8+ |
+
+---
+
+## Installation
+
+### 1. Frontend
+
+```bash
+npm install
+```
+
+### 2. Backend
+
+```bash
+cd backend
+poetry install
+```
+
+---
+
+## Configuration
+
+The backend reads credentials from `backend/.env`. Create that file before starting.
+
+### Option A — Anthropic API key
+
+If you have an API key from [console.anthropic.com](https://console.anthropic.com):
+
+```bash
+# backend/.env
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### Option B — auth2api (no API key needed)
+
+[auth2api](https://github.com/Skrullex/auth2api) is a local proxy that routes Anthropic SDK calls through your existing Claude.ai session. Use this if you have a Claude.ai subscription but no direct API key.
+
+**Install and run auth2api** (follow its README for your platform — it starts on port 8317 by default).
+
+Then point the backend at it:
+
+```bash
+# backend/.env
+ANTHROPIC_BASE_URL=http://127.0.0.1:8317
+ANTHROPIC_API_KEY=any-non-empty-string
+```
+
+The `ANTHROPIC_API_KEY` value is not sent to Anthropic when using the proxy — it just satisfies the SDK's validation. Set it to anything non-empty.
+
+---
+
+## Running
+
+Open two terminals:
+
+**Terminal 1 — backend**
+
+```bash
+cd backend
+poetry run vantage-backend
+```
+
+Starts the API at `http://localhost:8765`.
+
+**Terminal 2 — frontend**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## First-time setup
 
-## Learn More
+1. Go to **Settings** and configure your scope (target CIDR) and optionally override the AI model.
+2. Use the **Assistant** tab for interactive chat — the AI can suggest and run commands with your approval.
+3. Use the **Agent** tab to launch autonomous runs — the agent plans and executes steps, pausing for approval before each tool call.
+4. Confirmed vulnerabilities appear in **Findings** and can be compiled into a **Report** (downloads as Markdown).
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+vantage/
+├── src/                  # Next.js frontend
+│   ├── app/              # Pages (assistant, agent, findings, reports, settings)
+│   ├── components/       # Shared UI components
+│   └── contexts/         # React contexts (chat, agent state)
+└── backend/
+    └── vantage/
+        ├── main.py       # FastAPI app, port 8765
+        ├── models.py     # SQLModel DB models
+        └── routes/       # chat, agent, findings, settings, terminal
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The SQLite database is created automatically at `backend/vantage.db` on first run.
+- Chat history persists in SQLite; agent run history persists in browser localStorage.
+- The AI assistant streams responses directly from the backend (`http://localhost:8765`) rather than through the Next.js proxy, which would buffer SSE streams.
