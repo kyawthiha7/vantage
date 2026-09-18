@@ -1,0 +1,7 @@
+{
+  "scope_cidr": "127.0.0.1",
+  "scope_excluded": "keplar",
+  "model_provider": "Anthropic (Claude)",
+  "model_name": "claude-sonnet-5",
+  "api_key": "e#2QC1NbU8ZgKQ@TdFqN"
+}
